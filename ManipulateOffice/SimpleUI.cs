@@ -1,66 +1,62 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using Manifest;
 
 namespace ManipulateOffice
 {
-    //class SimpleUI
-    //{
-    //    private string fileName { get; set; }
-    //    private  string filePath { get; set; }
-    //    //private void buttonSetOutputPath(object sender, EventArgs e) {
-            
-    //    //}
-    //}
+    class ExcelUploadForm : Form
+    {
+        private OpenFileDialog openFileDialog;
+        private Button ConfirmButton;
+        private Button SelectButton;
+        public ReportGenerate _generator { get; set; }
 
-    class ExcelUploadForm : Form {
-        private OpenFileDialog op;
-        private Button[] browseBtn;
-        public string fileName { get; set; }
-        public string filePath { get; set; }
-
-        public ExcelUploadForm() {
-            //op = new OpenFileDialog();
-            browseBtn = new Button[4];
-        }
-
-        public void OpenFileDialog() {
-            //op.ShowDialog(); 
-            //browseBtn.
-            //browseBtn.Click += op.;// attatch openFileDialog to browseBtn
-            //op.FileOk += buttonGetImportFile; // attach file path
-            browseBtn[0] = new Button();
-            browseBtn[1] = new Button();
-            browseBtn[2] = new Button();
-            browseBtn[3] = new Button();
-            browseBtn[0].Text = "清单文件上传";
-            browseBtn[1].Text = "清单模板上传";
-            browseBtn[1].Location = new System.Drawing.Point(browseBtn[0].Left,browseBtn[0].Bottom+10);
-            browseBtn[2].Text = "输出地址选择";
-            browseBtn[3].Text = "导出";
-            this.Controls.AddRange(browseBtn);
-        }
-
-        //private void attachEvent() {
-        //    this.op. += new EventHandler(buttonGetImportFile);
-        //}
-
-        private void buttonGetImportFile(object sender, EventArgs e) // attach this to open button in openFileDialog
+        public ExcelUploadForm(ReportGenerate generator)
         {
-            OpenFileDialog dialog = new OpenFileDialog();
-            dialog.Filter = "Excel files (*.xls,*.xlsx)"; // file types, that will be allowed to upload
-            dialog.Multiselect = false; // allow/deny user to upload more than one file at a time
-            if (dialog.ShowDialog() == DialogResult.OK) // if user clicked OK
+            _generator = generator;
+        }
+
+        public void OpenFileDialog()
+        {
+            ConfirmButton = new Button
             {
-                this.fileName = Path.GetFileName(dialog.FileName); // get name of file
-                this.filePath = Path.GetDirectoryName(dialog.FileName); // get path of file
+                Size = new Size(100, 40),
+                Location = new Point(15, 120),
+                Text = "生成清单"
+            };
+            SelectButton = new Button
+            {
+                Size = new Size(100, 40),
+                Location = new Point(15, 15),
+                Text = "选择文件"
+            };
+            openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Excel Files|*.xls;*.xlsx;*.xlsm";
+            openFileDialog.Multiselect = false;
+
+            SelectButton.Click += SelectButtonClick;
+            ConfirmButton.Click += ConfirmButtonClick;
+            
+            Controls.Add(SelectButton);
+            Controls.Add(ConfirmButton);
+        }
+
+        private void SelectButtonClick(object sender, EventArgs e) // attach this to open button in openFileDialog
+        {
+            if (openFileDialog.ShowDialog() == DialogResult.OK) // if user clicked OK
+            {
+                _generator.ManifestFileName = Path.GetFileName(openFileDialog.FileName); // get name of file
+                _generator.ManifestFileDir = Path.GetDirectoryName(openFileDialog.FileName); // get path of file
             }
         }
-    } 
 
-
-
-
+        private void ConfirmButtonClick(object sender, EventArgs e)
+        {
+            _generator.ExcelGenearte();
+        }
+    }
 }

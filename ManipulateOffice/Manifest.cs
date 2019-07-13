@@ -9,15 +9,15 @@ using OfficeOpenXml;
 using Spire.Xls;
 using Workbook = Microsoft.Office.Interop.Excel.Workbook;
 
-//Todo:User interface, change format to xlsx, xls
+//Todo:Negative numbers
 namespace Manifest
 {
     class ReportGenerate
     {
-        public string manifestFileName { get; set; }
-        public string templateFileName { get; set; }
-        public string manifestFileDir { get; set; }
-        public string templateFileDir { get; set; }
+        public string ManifestFileName { get; set; }
+        public string TemplateFileName { get; set; } = "template.xlsx";
+        public string ManifestFileDir { get; set; } 
+        public string TemplateFileDir { get; set; } = @"D:\清单模板";
 
         public ExcelTypeConverter converter { get; set; }
 
@@ -28,11 +28,11 @@ namespace Manifest
 
         public void ExcelGenearte()
         {
-            var temp = new FileInfo(templateFileDir + Path.DirectorySeparatorChar + templateFileName);
-            var originManiName = manifestFileDir + Path.DirectorySeparatorChar + manifestFileName;
+            var temp = new FileInfo(TemplateFileDir + Path.DirectorySeparatorChar + TemplateFileName);
+            var originManiName = ManifestFileDir + Path.DirectorySeparatorChar + ManifestFileName;
             FileInfo mani;
 
-            if (manifestFileName.EndsWith(".xls"))
+            if (ManifestFileName.EndsWith(".xls"))
             {
                 var originMani = new FileInfo(originManiName);
                 mani = new FileInfo(originMani + "x");
@@ -60,8 +60,8 @@ namespace Manifest
                     int count = 1;
                     int preIndex = 2;
                     double moneySum = 0;
-                    string outputDir = @"F:\清单结果";
-                    string fileName = "广美";
+                    string outputDir = @"D:\清单结果";
+                    string fileName = ManifestFileName.Split('.')[0] + "子表";
                     var lastIndex = GetColumnLastRow(maniWs, "存货名称");
 
                     while (!(currentIndex > lastIndex))
