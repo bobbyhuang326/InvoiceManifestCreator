@@ -19,6 +19,15 @@ namespace Manifest
         public string ManifestFileDir { get; set; } 
         public string TemplateFileDir { get; set; } = @"D:\清单模板";
 
+        public string TotalAmountWithTax { get; set; } = "含税总金额";
+
+        public string InventoryName { get; set; } = "存货名称";
+
+        public string InventoryCode { get; set; } = "存货编码";
+
+        public string InventoryAmount { get; set; } = "入库数量";
+
+        public string UnitWithTax { get; set; } = "含税单价";
         public ExcelTypeConverter converter { get; set; }
 
         public ReportGenerate()
@@ -51,6 +60,23 @@ namespace Manifest
             using (ExcelPackage maniPackage = new ExcelPackage(mani))
             {
                 var maniWs = maniPackage.Workbook.Worksheets.FirstOrDefault();
+                if (!ColumnNameExist(maniWs, InventoryName))
+                {
+                    throw new InvalidOperationException($"列{InventoryName}未配置");
+                }
+                if (!ColumnNameExist(maniWs, TotalAmountWithTax))
+                {
+                    throw new InvalidOperationException($"列{TotalAmountWithTax}未配置");
+                }
+                if (!ColumnNameExist(maniWs, InventoryAmount))
+                {
+                    throw new InvalidOperationException($"列{InventoryAmount}未配置");
+                }
+                if (!ColumnNameExist(maniWs, UnitWithTax))
+                {
+                    throw new InvalidOperationException($"列{UnitWithTax}未配置");
+                }
+
                 //To Do clean up the Data
                 using (ExcelPackage tempPackage = new ExcelPackage(temp))
                 {
@@ -62,8 +88,7 @@ namespace Manifest
                     double moneySum = 0;
                     string outputDir = @"D:\清单结果";
                     string fileName = ManifestFileName.Split('.')[0] + "子表";
-                    var lastIndex = GetColumnLastRow(maniWs, "存货名称");
-
+                    var lastIndex = GetColumnLastRow(maniWs, InventoryName);
                     while (!(currentIndex > lastIndex))
                     {
                         if (moneySum < 113000)
@@ -71,15 +96,19 @@ namespace Manifest
                             double money;
                             var moneyExist =
                                 double.TryParse(
-                                    maniWs.Cells[currentIndex, GetColumnByName(maniWs, "含税总金额")].Value?.ToString(),
+                                    maniWs.Cells[currentIndex, GetColumnByName(maniWs, TotalAmountWithTax)].Value?.ToString(),
                                     out money);
                             if (!moneyExist)
                             {
                                 money = 0;
                             }
+                            else if(money < 0)
+                            {
+                                throw new InvalidOperationException($"列{TotalAmountWithTax}不能为负数");
+                            }
 
                             moneySum += money;
-                            var stockName = maniWs.Cells[currentIndex, GetColumnByName(maniWs, "存货名称")];
+                            var stockName = maniWs.Cells[currentIndex, GetColumnByName(maniWs, InventoryName)];
 
                             var nameLength = stockName.Value?.ToString().Length;
                             if (nameLength > 30)
@@ -102,45 +131,44 @@ namespace Manifest
                                 {
                                     //sheet already exist
                                     var xlSheetsList = xlPackage.Workbook.Worksheets;
-                                    var destWs = xlSheetsList.Where(x => x.Name == "增值税清单").Count() == 0
+                                    var destWs = xlSheetsList.All(x => x.Name != "增值税清单")
                                         ? xlSheetsList.Add("增值税清单", tempWs)
                                         : xlSheetsList["增值税清单"];
-                                    string destColumnName;
-                                    string srcColumnName;
-                                    ExcelRange destRange;
-                                    ExcelRange srcRange;
                                     var interval = currentIndex - preIndex + 2;
 
-                                    destColumnName = "货物或应税劳务、服务名称";
-                                    srcColumnName = "存货名称";
-                                    destRange = GetExcelRange(destWs, 2, interval, destColumnName, destColumnName);
-                                    srcRange = GetExcelRange(maniWs, preIndex, currentIndex, srcColumnName,
+                                    string destColumnName = "货物或应税劳务、服务名称";
+                                    string srcColumnName = InventoryName;
+                                    ExcelRange destRange = GetExcelRange(destWs, 2, interval, destColumnName, destColumnName);
+                                    ExcelRange srcRange = GetExcelRange(maniWs, preIndex, currentIndex, srcColumnName,
                                         srcColumnName);
                                     CopyFrom(srcRange, destRange);
 
-                                    destColumnName = "规格型号";
-                                    srcColumnName = "存货编码";
-                                    destRange = GetExcelRange(destWs, 2, interval, destColumnName, destColumnName);
-                                    srcRange = GetExcelRange(maniWs, preIndex, currentIndex, srcColumnName,
-                                        srcColumnName);
-                                    CopyFrom(srcRange, destRange);
+                                    if (ColumnNameExist(maniWs, InventoryCode))
+                                    {
+                                        destColumnName = "规格型号";
+                                        srcColumnName = InventoryCode;
+                                        destRange = GetExcelRange(destWs, 2, interval, destColumnName, destColumnName);
+                                        srcRange = GetExcelRange(maniWs, preIndex, currentIndex, srcColumnName,
+                                            srcColumnName);
+                                        CopyFrom(srcRange, destRange);
+                                    }
 
                                     destColumnName = "数量";
-                                    srcColumnName = "入库数量";
+                                    srcColumnName = InventoryAmount;
                                     destRange = GetExcelRange(destWs, 2, interval, destColumnName, destColumnName);
                                     srcRange = GetExcelRange(maniWs, preIndex, currentIndex, srcColumnName,
                                         srcColumnName);
                                     CopyFrom(srcRange, destRange);
 
                                     destColumnName = "金额";
-                                    srcColumnName = "含税总金额";
+                                    srcColumnName = TotalAmountWithTax;
                                     destRange = GetExcelRange(destWs, 2, interval, destColumnName, destColumnName);
                                     srcRange = GetExcelRange(maniWs, preIndex, currentIndex, srcColumnName,
                                         srcColumnName);
                                     CopyFrom(srcRange, destRange);
 
                                     destColumnName = "单价";
-                                    srcColumnName = "含税单价";
+                                    srcColumnName = UnitWithTax;
                                     destRange = GetExcelRange(destWs, 2, interval, destColumnName, destColumnName);
                                     srcRange = GetExcelRange(maniWs, preIndex, currentIndex, srcColumnName,
                                         srcColumnName);
@@ -158,7 +186,7 @@ namespace Manifest
                                     FillValue("计量单位", interval, destWs, "张");
 
                                     //set index column
-                                    var st_lastRow = GetColumnLastRow(destWs, "规格型号");
+                                    var st_lastRow = GetColumnLastRow(destWs, "金额");
                                     var st_columnIndex = GetColumnByName(destWs, "序号");
                                     for (int i = 2; i <= st_lastRow; i++)
                                     {
@@ -187,6 +215,18 @@ namespace Manifest
         }
 
         /// <summary>
+        /// Get column index by column name，return bool
+        /// </summary>
+        /// <param name="ws"></param>
+        /// <param name="columnName"></param>
+        /// <returns></returns>
+        private bool ColumnNameExist(ExcelWorksheet ws, string columnName)
+        {
+            if (ws == null) throw new ArgumentNullException(nameof(ws));
+            return ws.Cells["1:1"].FirstOrDefault(c => c.Value.ToString() == columnName) != null;
+        }
+        
+        /// <summary>
         /// Get column index by column name
         /// </summary>
         /// <param name="ws"></param>
@@ -195,7 +235,7 @@ namespace Manifest
         public int GetColumnByName(ExcelWorksheet ws, string columnName)
         {
             if (ws == null) throw new ArgumentNullException(nameof(ws));
-            columnName = columnName ?? "0";
+            columnName = columnName ?? "";
             return ws.Cells["1:1"].First(c => c.Value.ToString() == columnName).Start.Column;
         }
 
@@ -208,7 +248,7 @@ namespace Manifest
         /// <param name="columnName1"></param>
         /// <param name="columnName2"></param>
         /// <returns></returns>
-        public ExcelRange GetExcelRange(ExcelWorksheet s, int rowIndex1, int rowIndex2, string columnName1,
+        private ExcelRange GetExcelRange(ExcelWorksheet s, int rowIndex1, int rowIndex2, string columnName1,
             string columnName2)
         {
             return s.Cells[rowIndex1, GetColumnByName(s, columnName1), rowIndex2, GetColumnByName(s, columnName2)];
@@ -221,7 +261,7 @@ namespace Manifest
         /// <param name="destWs"></param>
         /// <param name="srcRange"></param>
         /// <param name="destRange"></param>
-        public void CopyFrom(ExcelRange srcRange, ExcelRange destRange)
+        private void CopyFrom(ExcelRange srcRange, ExcelRange destRange)
         {
             //bug:out of range
             srcRange.Copy(destRange);
@@ -233,7 +273,7 @@ namespace Manifest
         /// <param name="srcColumnName"></param>
         /// <param name="period">rows of a sub table</param>
         /// <param name="destWs"></param>
-        public void CopyValue(string srcColumnName, int interval, ExcelWorksheet destWs)
+        private void CopyValue(string srcColumnName, int interval, ExcelWorksheet destWs)
         {
             var srcColumnIndex = GetColumnByName(destWs, srcColumnName);
             var srcValue = destWs.Cells[2, srcColumnIndex].Value;
@@ -248,7 +288,7 @@ namespace Manifest
         /// <param name="interval">rows of a sub table</param>
         /// <param name="destWs"></param>
         /// <param name="srcValue"> Value given to be filled</param>
-        public void FillValue(string srcColumnName, int interval, ExcelWorksheet destWs, object srcValue)
+        private void FillValue(string srcColumnName, int interval, ExcelWorksheet destWs, object srcValue)
         {
             var srcColumnIndex = GetColumnByName(destWs, srcColumnName);
             var destRange = destWs.Cells[2, srcColumnIndex, interval, srcColumnIndex];
@@ -261,7 +301,7 @@ namespace Manifest
         /// <param name="ws"></param>
         /// <param name="columnName"></param>
         /// <returns></returns>
-        public int GetColumnLastRow(ExcelWorksheet ws, string columnName)
+        private int GetColumnLastRow(ExcelWorksheet ws, string columnName)
         {
             var columnIndex = GetColumnByName(ws, columnName);
             var lastIndex = ws.Cells[ws.Dimension.Start.Row, columnIndex, ws.Dimension.End.Row, columnIndex]
