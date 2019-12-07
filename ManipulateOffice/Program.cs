@@ -12,10 +12,13 @@ namespace ManipulateOffice
         static void Main(string[] args)
         {
             ReportGenerate r = new ReportGenerate();
-            var form = new ExcelUploadForm(r);
-            form.OpenFileDialog();
-            Application.EnableVisualStyles();
-            Application.Run(form);
+            r.ManifestFileName = "20191124.xlsx";
+            r.ManifestFileDir = "C:\\Users\\Bobby\\Desktop";
+            r.ExcelGenearte();
+//            var form = new ExcelUploadForm(r);
+//            form.OpenFileDialog();+
+//            Application.EnableVisualStyles();
+//            Application.Run(form);
         }
     }
 }

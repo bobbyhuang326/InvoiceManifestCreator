@@ -3,6 +3,7 @@ using Spire.Xls;
 
 namespace Manifest
 {
+    //todo: due to trail problem, rewrite this by NPOI
     class ExcelTypeConverter
     {
         /// <summary>

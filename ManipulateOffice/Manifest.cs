@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using OfficeOpenXml;
-using Spire.Xls;
-using Workbook = Microsoft.Office.Interop.Excel.Workbook;
 
 //Todo:Negative numbers
 namespace Manifest
@@ -19,34 +13,36 @@ namespace Manifest
         public string ManifestFileDir { get; set; } 
         public string TemplateFileDir { get; set; } = @"D:\清单模板";
 
-        public ExcelTypeConverter converter { get; set; }
+//        public ExcelTypeConverter converter { get; set; }
 
-        public ReportGenerate()
-        {
-            converter = new ExcelTypeConverter();
-        }
+//        public ReportGenerate()
+//        {
+//            converter = new ExcelTypeConverter();
+//        }
 
         public void ExcelGenearte()
         {
             var temp = new FileInfo(TemplateFileDir + Path.DirectorySeparatorChar + TemplateFileName);
-            var originManiName = ManifestFileDir + Path.DirectorySeparatorChar + ManifestFileName;
-            FileInfo mani;
+            
+            var mani = new FileInfo(ManifestFileDir + Path.DirectorySeparatorChar + ManifestFileName); 
+//            var originManiName = ManifestFileDir + Path.DirectorySeparatorChar + ManifestFileName;
+//            FileInfo mani;
 
-            if (ManifestFileName.EndsWith(".xls"))
-            {
-                var originMani = new FileInfo(originManiName);
-                mani = new FileInfo(originMani + "x");
-                var IsConverted = converter.XlsToXlsx(originMani);
-                if (!IsConverted)
-                {
-                    Console.WriteLine("Convert fail.");
-                    return;
-                }
-            }
-            else
-            {
-                mani = new FileInfo(originManiName);
-            }
+//            if (ManifestFileName.EndsWith(".xls"))
+//            {
+//                var originMani = new FileInfo(originManiName);
+//                mani = new FileInfo(originMani + "x");
+//                var IsConverted = converter.XlsToXlsx(originMani);
+//                if (!IsConverted)
+//                {
+//                    Console.WriteLine("Convert fail.");
+//                    return;
+//                }
+//            }
+//            else
+//            {
+//                mani = new FileInfo(originManiName);
+//            }
 
             using (ExcelPackage maniPackage = new ExcelPackage(mani))
             {
@@ -167,7 +163,7 @@ namespace Manifest
 
                                     preIndex = currentIndex + 1;
                                     xlPackage.SaveAs(fi);
-                                    converter.XlsxToXls(fi);
+//                                    converter.XlsxToXls(fi);
                                 }
 
                                 moneySum = 0;
